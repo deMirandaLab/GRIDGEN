@@ -119,7 +119,7 @@ XENIUM_SOM_PARAMS = {
 }
 
 # Scales to test
-SCALES = [1, 5, 10]
+SCALES = [1, 5,10]  # Quick test with 1 and 3 cores
 
 
 # ==============================================================================
@@ -316,7 +316,7 @@ def run_all_benchmarks():
 
     # ===== Xenium Full Slide =====
     logger.info("\n" + "=" * 60)
-    logger.info("XENIUM FULL SLIDE (1/3)")
+    logger.info("XENIUM FULL SLIDE (1/4)")
     logger.info("=" * 60)
 
     # Convolutional
@@ -331,7 +331,22 @@ def run_all_benchmarks():
         metrics['platform'] = 'Xenium'
         metrics['method'] = 'Convolutional'
         metrics['n_cores'] = 'Full Slide'
-        metrics['file'] = 'Third of Full Slide'
+        metrics['file'] = 'Quarter of Full Slide'
+        results.append(metrics)
+
+    # KD-tree
+    logger.info("\nFull slide - KD-tree...")
+    config = {
+        'benchmark_type': 'xenium_fullslide_kdtree',
+        'full_path': XENIUM_FULL_PATH,
+        'params': {**XENIUM_KDTREE_PARAMS, 'target_tum': XENIUM_TARGET_TUM}
+    }
+    metrics = run_benchmark_subprocess(config)
+    if metrics:
+        metrics['platform'] = 'Xenium'
+        metrics['method'] = 'KD-tree'
+        metrics['n_cores'] = 'Full Slide'
+        metrics['file'] = 'Quarter of Full Slide'
         results.append(metrics)
 
     # SOM
@@ -346,7 +361,7 @@ def run_all_benchmarks():
         metrics['platform'] = 'Xenium'
         metrics['method'] = 'SOM'
         metrics['n_cores'] = 'Full Slide'
-        metrics['file'] = 'Third of Full Slide'
+        metrics['file'] = 'Quarter of Full Slide'
         results.append(metrics)
 
     return results

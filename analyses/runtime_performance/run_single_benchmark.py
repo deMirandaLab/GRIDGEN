@@ -458,18 +458,18 @@ def benchmark_xenium_som(files_list, params):
 
 
 def benchmark_xenium_fullslide_conv(full_path, params):
-    """Xenium full slide (1/3) - Convolutional"""
+    """Xenium full slide (1/4) - Convolutional"""
     metrics = {}
     tracemalloc.start()
     process = psutil.Process()
     initial_memory = process.memory_info().rss / (1024 ** 3)
 
-    # 1. LOAD DATA - ONE THIRD
+    # 1. LOAD DATA - ONE QUARTER
     t0 = time.time()
     df_total = pd.read_csv(full_path, compression='gzip')
     y_max = df_total['y_location'].max()
-    y_third = y_max / 3
-    df_total = df_total[df_total['y_location'] <= y_third]
+    y_quarter = y_max / 4
+    df_total = df_total[df_total['y_location'] <= y_quarter]
 
     df_total = df_total[['x_location', 'y_location', 'feature_name']]
     df_total = df_total.rename(columns={'feature_name': 'target'})
@@ -542,8 +542,8 @@ def benchmark_xenium_fullslide_conv(full_path, params):
     return metrics
 
 
-def benchmark_xenium_fullslide_som(full_path, params):
-    """Xenium full slide (1/3) - SOM"""
+def benchmark_xenium_fullslide_kdtree(full_path, params):
+    """Xenium full slide (1/4) - KD-tree"""
     metrics = {}
     tracemalloc.start()
     process = psutil.Process()
@@ -553,8 +553,91 @@ def benchmark_xenium_fullslide_som(full_path, params):
     t0 = time.time()
     df_total = pd.read_csv(full_path, compression='gzip')
     y_max = df_total['y_location'].max()
-    y_third = y_max / 3
-    df_total = df_total[df_total['y_location'] <= y_third]
+    y_quarter = y_max / 4
+    df_total = df_total[df_total['y_location'] <= y_quarter]
+
+    df_total = df_total[['x_location', 'y_location', 'feature_name']]
+    df_total = df_total.rename(columns={'feature_name': 'target'})
+    df_total = df_total[~df_total['target'].str.contains('System|egative')]
+    df_total['X'] = df_total['x_location'] - min(df_total['x_location'])
+    df_total['Y'] = df_total['y_location'] - min(df_total['y_location'])
+    n_genes = len(df_total['target'].unique())
+    height = int(max(df_total['X'])) + 1
+    width = int(max(df_total['Y'])) + 1
+
+    metrics['load_time'] = time.time() - t0
+    metrics['n_transcripts'] = len(df_total)
+    metrics['n_genes'] = n_genes
+
+    # 2. EMPTY CONTOURS
+    t0 = time.time()
+    CEmpty = contours.KDTreeContours(df_total[['target', 'X', 'Y']],
+                                     contour_name='empty',
+                                     height=height, width=width)
+    CEmpty.get_kdt_dist(radius=params['radius'])
+    array_total_nei = CEmpty.get_neighbour_array()
+    CEmpty.contours_from_neighbors(
+        density_threshold=params['density_th_empty'],
+        min_area_threshold=params['min_area_th_empty'],
+        directionality='lower'
+    )
+    metrics['empty_contour_time'] = time.time() - t0
+
+    # 3. TUMOR CONTOURS
+    t0 = time.time()
+    subset_condition = df_total['target'].isin(params['target_tum'])
+    df_subset = df_total[subset_condition]
+    Ctum = contours.KDTreeContours(df_subset[['target', 'X', 'Y']],
+                                   contour_name='cancer',
+                                   height=height, width=width)
+    Ctum.get_kdt_dist(radius=params['radius'])
+    array_tum_nei = Ctum.get_neighbour_array()
+    array_tum_nei = Ctum.interpolate_array()
+    Ctum.contours_from_neighbors(
+        density_threshold=params['density_th_tum'],
+        min_area_threshold=params['min_area_th_tum'],
+        directionality='higher'
+    )
+    metrics['tumor_contour_time'] = time.time() - t0
+
+    # 4. MASK GENERATION
+    t0 = time.time()
+    GM = get_masks.GetMasks(image_shape=(height, width))
+    mask_empty = GM.create_mask(CEmpty.contours)
+    mask_tum = GM.create_mask(Ctum.contours)
+    mask_stroma = GM.subtract_masks(
+        np.ones((height, width), dtype=np.uint8), mask_tum, mask_empty
+    )
+    mask_stroma = GM.filter_binary_mask_by_area(mask_stroma, min_area=700)
+    metrics['mask_time'] = time.time() - t0
+
+    # Memory tracking
+    current_memory = process.memory_info().rss / (1024 ** 3)
+    peak_memory = tracemalloc.get_traced_memory()[1] / (1024 ** 3)
+    metrics['peak_memory_gb'] = max(peak_memory, current_memory - initial_memory)
+    tracemalloc.stop()
+
+    metrics['total_time'] = (metrics['load_time'] +
+                             metrics['tumor_contour_time'] +
+                             metrics['empty_contour_time'] +
+                             metrics['mask_time'])
+
+    return metrics
+
+
+def benchmark_xenium_fullslide_som(full_path, params):
+    """Xenium full slide (1/4) - SOM"""
+    metrics = {}
+    tracemalloc.start()
+    process = psutil.Process()
+    initial_memory = process.memory_info().rss / (1024 ** 3)
+
+    # 1. LOAD DATA
+    t0 = time.time()
+    df_total = pd.read_csv(full_path, compression='gzip')
+    y_max = df_total['y_location'].max()
+    y_quarter = y_max / 4
+    df_total = df_total[df_total['y_location'] <= y_quarter]
 
     df_total = df_total[['x_location', 'y_location', 'feature_name']]
     df_total = df_total.rename(columns={'feature_name': 'target'})
@@ -570,7 +653,7 @@ def benchmark_xenium_fullslide_som(full_path, params):
     # 2. BINNING
     t0 = time.time()
     GB = GetBins(params['bin_size'], unique_targets, logger=None)
-    GB.get_bin_cohort([df_total[['target', 'X', 'Y']]], ['third_slide'], cohort_name='third_slide')
+    GB.get_bin_cohort([df_total[['target', 'X', 'Y']]], ['quarter_slide'], cohort_name='quarter_slide')
     GB.preprocess_bin(min_counts=params['min_counts'])
     adata = GB.adata
     metrics['binning_time'] = time.time() - t0
@@ -648,6 +731,7 @@ def benchmark_som(files_list, params, platform):
     GC = GetContour(adata, logger=None)
     GC.run_som(som_shape=(2, 1), n_iter=5000, sigma=0.5,
                learning_rate=0.5, random_state=42)
+    som_images = GC.get_som_2d_image(bin_size=params['bin_size'])
     metrics['som_time'] = time.time() - t0
 
     # Memory tracking
@@ -694,6 +778,8 @@ if __name__ == "__main__":
             metrics = benchmark_xenium_som(config['files'], params)
         elif benchmark_type == 'xenium_fullslide_conv':
             metrics = benchmark_xenium_fullslide_conv(config['full_path'], params)
+        elif benchmark_type == 'xenium_fullslide_kdtree':
+            metrics = benchmark_xenium_fullslide_kdtree(config['full_path'], params)
         elif benchmark_type == 'xenium_fullslide_som':
             metrics = benchmark_xenium_fullslide_som(config['full_path'], params)
         else:
