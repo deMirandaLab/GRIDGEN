@@ -105,6 +105,30 @@ def map_phenotypes_to_polygons(polygons, phenotype_df, fov_name, cell_id_col='Ce
     return pd.DataFrame(cell_data)
 
 
+def map_phenotypes_to_polygons_xenium(polygons, adata_selection, selection_name, min_x, min_y):
+    """Map phenotypes from AnnData for Xenium with coordinate shifting"""
+
+    cell_data = []
+    for cell_id, polygon in polygons.items():
+        # Look up by cellID column
+        cell_info = adata_selection.obs[adata_selection.obs['cellID'] == cell_id]
+
+        if len(cell_info) == 0:
+            continue
+
+        # Shift polygon coordinates
+        shifted_coords = [(x - min_x, y - min_y) for x, y in polygon.exterior.coords]
+        shifted_polygon = Polygon(shifted_coords)
+
+        cell_data.append({
+            'cell_id': cell_id,
+            'polygon': shifted_polygon,
+            'major_cluster': cell_info['annotation_level2'].iloc[0],
+            'compartment': cell_info['compartment'].iloc[0]
+        })
+
+    return pd.DataFrame(cell_data)
+
 # ============================================================================
 # ANALYSIS
 # ============================================================================
