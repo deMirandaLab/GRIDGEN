@@ -14,6 +14,7 @@ regions of interest based on transcript density. It enables the identification o
 
 ## Table of Contents
 - [Features](#features)
+- [Installation](#Installation)
 - [Documentation](#documentation)
 - [Credits](#credits)
 - [License](#license)
@@ -35,6 +36,15 @@ GRIDGENE contains the following Case Studies:
   - Integration with cell segmentation pipelines  
   - Alternative masking strategies using KD-Trees and Self-Organizing Maps (SOM)
 
+---
+## Installation
+
+GRIDGENE requires Python >= 3.10.
+```bash
+git clone https://github.com/deMirandaLab/GRIDGENE.git
+cd GRIDGENE
+pip install -e .
+```
 ---
 
 ## Documentation
