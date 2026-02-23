@@ -1,0 +1,22 @@
+Platform,Method,Scale,Transcripts (M),Runtime mean (s),Runtime std (s),Memory mean (GB),Memory std (GB)
+CosMx,Convolutional,1 cores,1.84,31.7,,40.84,
+CosMx,Convolutional,5 cores,5.44,28.96,1.99,40.65,0.2
+CosMx,Convolutional,10 cores,10.53,29.03,2.27,40.63,0.21
+CosMx,KD-tree,1 cores,1.84,83.29,,33.4,
+CosMx,KD-tree,5 cores,5.44,52.5,22.6,15.92,11.76
+CosMx,KD-tree,10 cores,10.53,50.78,22.54,15.38,13.12
+CosMx,SOM,1 cores,1.84,2.82,,1.01,
+CosMx,SOM,5 cores,5.44,7.1,,1.01,
+CosMx,SOM,10 cores,10.53,13.5,,1.46,
+Xenium,Convolutional,1 cores,2.49,16.15,,3.04,
+Xenium,Convolutional,5 cores,17.24,22.38,6.02,2.97,0.22
+Xenium,Convolutional,10 cores,31.0,19.95,5.51,2.88,0.28
+Xenium,Convolutional,Full slide (1/4 Xenium),6.93,164.03,,38.91,
+Xenium,KD-tree,1 cores,2.49,44.93,,10.26,
+Xenium,KD-tree,5 cores,17.24,64.14,23.56,17.49,8.77
+Xenium,KD-tree,10 cores,31.0,56.25,21.41,14.95,7.89
+Xenium,KD-tree,Full slide (1/4 Xenium),6.93,244.6,,32.22,
+Xenium,SOM,1 cores,2.49,9.66,,0.78,
+Xenium,SOM,5 cores,17.24,69.89,,2.04,
+Xenium,SOM,10 cores,31.0,125.93,,3.67,
+Xenium,SOM,Full slide (1/4 Xenium),6.93,117.79,,22.05,
