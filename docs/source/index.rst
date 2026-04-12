@@ -14,5 +14,6 @@ It is designed to help researchers and data scientists work with spatial transcr
    :maxdepth: 2
    :caption: Contents:
 
+   Installation <installation>
    Tutorials <tutorials/index>
    API Reference <gridgene_api/modules>

@@ -44,7 +44,7 @@ class GetBins:
         self.unique_targets = unique_targets
         self.adata = None
         self.eval_som_statistical_df = None
-        self.logger = logger or get_logger(f'{__name__}.{contour_name or "GetContour"}')
+        self.logger = logger or get_logger(f'{__name__}.GetBins')
         self.logger.info("Initialized GetContour")
 
     def get_bin_df(self, df: pd.DataFrame, df_name: str) -> ad.AnnData:
